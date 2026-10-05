@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings | ShrimpGuard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="settings-page">
+<div class="sidebar">
+    <div class="logo">🦐 <span>ShrimpGuard</span></div>
+    <p class="subtitle">Water Quality Monitoring</p>
+    <nav>
+        <a href="/">🏠 Dashboard</a>
+        <a href="/monitoring">📡 Real-time Monitoring</a>
+        <a href="/historical">📊 Historical Data</a>
+        <a href="/analytics">📈 Analytics &amp; Reports</a>
+        <a href="/alerts">🚨 Alerts and Notifications</a>
+        <a href="/settings" class="active">⚙️ Settings</a>
+    </nav>
+    {% include "_logout_form.html" %}
+</div>
+
+<main class="main-content">
+    <header>
+        <div>
+            <p class="eyebrow">Account</p>
+            <h1>Settings</h1>
+            <p>Update your profile and sign-in details.</p>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="settings-notices" role="status">
+        {% for category, message in messages %}
+        <p class="settings-notice {{ category }}">{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <section class="settings-grid" aria-label="Account settings">
+        <article class="settings-panel">
+            <div class="settings-panel-heading">
+                <h2>Profile information</h2>
+                <p>Change the name and email associated with your account.</p>
+            </div>
+            <form class="settings-form" method="post" action="{{ url_for('settings') }}">
+                <input type="hidden" name="csrf_token" value="{{ settings_csrf_token }}">
+                <input type="hidden" name="action" value="profile">
+                <label for="profile-name">Name</label>
+                <input id="profile-name" name="name" type="text" maxlength="80" value="{{ user.user_name }}" required>
+                <label for="profile-email">Email</label>
+                <input id="profile-email" name="email" type="email" maxlength="255" value="{{ user.email }}" required>
+                <label for="profile-role">Role</label>
+                <input id="profile-role" type="text" value="{{ user.role }}" readonly>
+                <button class="settings-submit" type="submit">Save Profile</button>
+            </form>
+        </article>
+
+        <article class="settings-panel">
+            <div class="settings-panel-heading">
+                <h2>Change password</h2>
+                <p>Use at least 8 characters. Your current password is required.</p>
+            </div>
+            <form class="settings-form" method="post" action="{{ url_for('settings') }}">
+                <input type="hidden" name="csrf_token" value="{{ settings_csrf_token }}">
+                <input type="hidden" name="action" value="password">
+                <label for="current-password">Current password</label>
+                <input id="current-password" name="current_password" type="password" autocomplete="current-password" required>
+                <label for="new-password">New password</label>
+                <input id="new-password" name="new_password" type="password" minlength="8" autocomplete="new-password" required>
+                <label for="confirm-password">Confirm new password</label>
+                <input id="confirm-password" name="confirm_password" type="password" minlength="8" autocomplete="new-password" required>
+                <button class="settings-submit" type="submit">Update Password</button>
+            </form>
+        </article>
+    </section>
+</main>
+</body>
+</html>

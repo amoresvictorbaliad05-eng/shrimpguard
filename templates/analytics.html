@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics & Reports | ShrimpGuard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <div class="logo">🦐 <span>ShrimpGuard</span></div>
+    <p class="subtitle">Water Quality Monitoring</p>
+    <nav>
+        <a href="/">🏠 Dashboard</a>
+        <a href="/monitoring">📡 Real-time Monitoring</a>
+        <a href="/historical">📊 Historical Data</a>
+        <a href="/analytics" class="active">📈 Analytics & Reports</a>
+        <a href="/alerts">🚨 Alerts and Notifications</a>
+        <a href="/settings">⚙️ Settings</a>
+    </nav>
+    {% include "_logout_form.html" %}
+</div>
+
+<div class="main-content">
+    <header>
+        <div>
+            <h1>Analytics & Reports</h1>
+            <p>Operational insights and farm health summary based on your latest sensor readings.</p>
+        </div>
+        <div class="header-info">
+            <button id="notification-button" class="notification-button" type="button" aria-label="View notifications">🔔</button>
+            <div class="time"><span id="time"></span></div>
+        </div>
+    </header>
+
+    <section class="cards">
+        <div class="card">
+            <div class="icon">📊</div>
+            <div>
+                <h3>Average Water Quality</h3>
+                <h2>87 / 100</h2>
+                <p>Healthy range overall</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="icon">🚨</div>
+            <div>
+                <h3>Active Alerts</h3>
+                <h2>2</h2>
+                <p>1 mild, 1 critical</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="icon">💡</div>
+            <div>
+                <h3>Recommended Action</h3>
+                <h2>Adjust pH</h2>
+                <p>Improve stability this cycle</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="icon">⏱️</div>
+            <div>
+                <h3>Monitoring Status</h3>
+                <h2>Live</h2>
+                <p>Updated every cycle</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel adjustment-panel">
+        <h2>Sensor Adjustment Guide</h2>
+        <table class="adjustment-table">
+            <thead>
+                <tr>
+                    <th>Temperature</th>
+                    <th>pH</th>
+                    <th>Salinity</th>
+                    <th>Turbidity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div id="temp-adjustment" class="sensor-value">--</div>
+                        <small id="temp-status" class="sensor-status">Waiting for reading</small>
+                    </td>
+                    <td>
+                        <div id="ph-adjustment" class="sensor-value">--</div>
+                        <small id="ph-status" class="sensor-status">Waiting for reading</small>
+                    </td>
+                    <td>
+                        <div id="salinity-adjustment" class="sensor-value">--</div>
+                        <small id="salinity-status" class="sensor-status">Waiting for reading</small>
+                    </td>
+                    <td>
+                        <div id="turbidity-adjustment" class="sensor-value">--</div>
+                        <small id="turbidity-status" class="sensor-status">Waiting for reading</small>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="dashboard-grid">
+        <div class="panel">
+            <h2>Farm Health Summary</h2>
+            <div class="status-box">
+                <h3>Overall pond condition is stable but requires attention on pH and turbidity.</h3>
+                <p>Most parameters remain within the desired operating range, but the latest readings suggest preventive action should be taken to avoid shrimp stress.</p>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Key Findings</h2>
+            <ul class="recommendations">
+                <li>pH is slightly outside the ideal range and should be corrected soon.</li>
+                <li>Turbidity is elevated, which may indicate sediment buildup or poor filtration.</li>
+                <li>Temperature remains stable and does not currently indicate immediate risk.</li>
+            </ul>
+        </div>
+
+        <div class="panel">
+            <h2>Recommended Operations</h2>
+            <ul class="recommendations">
+                <li>Increase water filtration and inspect pond circulation.</li>
+                <li>Apply pH balancing treatment during the next maintenance check.</li>
+                <li>Continue monitoring every cycle to detect trend changes early.</li>
+            </ul>
+        </div>
+
+        <div class="panel">
+            <h2>Report Snapshot</h2>
+            <ul class="recommendations">
+                <li>Water Quality Index: 87</li>
+                <li>Critical Alerts: 1</li>
+                <li>Mild Alerts: 1</li>
+                <li>Last Update: Today, 2:00 PM</li>
+            </ul>
+        </div>
+    </section>
+</div>
+
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+</body>
+</html>

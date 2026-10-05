@@ -1,0 +1,242 @@
+const readingKey = "shrimpGuardLatest";
+const historyKey = "shrimpGuardHistory";
+
+function updateDeviceTime() {
+    document.getElementById("time").textContent =
+        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function getAlertData(reading) {
+    const alerts = [];
+
+    if (!reading) {
+        return alerts;
+    }
+
+    if (reading.temperature < 26 || reading.temperature > 32) {
+        const severity = reading.temperature < 24 || reading.temperature > 34 ? "Critical" : "Warning";
+        alerts.push({
+            severity,
+            title: `${severity} Temperature Alert`,
+            message: `Temperature is currently ${reading.temperature} °C, outside the recommended range of 26–32 °C.`,
+            notification: `SMS: Pond temperature is ${reading.temperature} °C. Check cooling or heating systems and respond promptly.`
+        });
+    }
+
+    if (reading.ph < 7.5 || reading.ph > 8.5) {
+        const severity = reading.ph < 7.0 || reading.ph > 9.0 ? "Critical" : "Warning";
+        alerts.push({
+            severity,
+            title: `${severity} pH Alert`,
+            message: `pH is currently ${reading.ph}, outside the recommended range of 7.5–8.5.`,
+            notification: `SMS: pH is ${reading.ph}. Adjust water treatment and verify the pH control system.`
+        });
+    }
+
+    if (reading.salinity < 15 || reading.salinity > 30) {
+        const severity = reading.salinity < 12 || reading.salinity > 33 ? "Critical" : "Warning";
+        alerts.push({
+            severity,
+            title: `${severity} Salinity Alert`,
+            message: `Salinity is currently ${reading.salinity} ppt, outside the recommended range of 15–30 ppt.`,
+            notification: `SMS: Salinity is ${reading.salinity} ppt. Verify water exchange and adjust salinity levels.`
+        });
+    }
+
+    if (reading.turbidity > 30) {
+        const severity = reading.turbidity > 40 ? "Critical" : "Warning";
+        alerts.push({
+            severity,
+            title: `${severity} Turbidity Alert`,
+            message: `Turbidity is currently ${reading.turbidity} NTU, above the recommended limit of 30 NTU.`,
+            notification: `SMS: Turbidity is ${reading.turbidity} NTU. Increase filtration and inspect for sediment or waste buildup.`
+        });
+    }
+
+    return alerts;
+}
+
+function formatDateTime(isoString) {
+    if (!isoString) {
+        return "-";
+    }
+
+    const date = new Date(isoString);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+}
+
+function updateSummaryCards(history, latestReading) {
+    const alertsFromHistory = history.flatMap((reading) => getAlertData(reading));
+    const criticalAlerts = alertsFromHistory.filter((alert) => alert.severity === "Critical").length;
+    const warningAlerts = alertsFromHistory.filter((alert) => alert.severity === "Warning").length;
+    const resolvedAlerts = history.filter((reading) => getAlertData(reading).length === 0).length;
+    const unreadNotifications = alertsFromHistory.length;
+
+    document.getElementById("critical-alerts-count").textContent = criticalAlerts;
+    document.getElementById("warning-alerts-count").textContent = warningAlerts;
+    document.getElementById("resolved-alerts-count").textContent = resolvedAlerts;
+    document.getElementById("unread-notifications-count").textContent = unreadNotifications;
+
+    const activeAlerts = latestReading ? getAlertData(latestReading) : [];
+    const activeAlertsContainer = document.getElementById("active-alerts");
+
+    if (activeAlerts.length === 0) {
+        activeAlertsContainer.innerHTML = `
+            <div class="status-box">
+                ✓ No active alerts right now. All monitored parameters are within the recommended range.
+            </div>
+        `;
+    } else {
+        activeAlertsContainer.innerHTML = activeAlerts.map((item) => `
+            <div class="alert">
+                ${item.severity === "Critical" ? "⚠" : "📣"} ${item.title}
+                <br>
+                ${item.message}
+                <br><br>
+                <strong>Notification:</strong> ${item.notification}
+            </div>
+        `).join("");
+    }
+
+    const statusContainer = document.getElementById("notification-status");
+    statusContainer.className = "notification-status-panel";
+    statusContainer.innerHTML = `
+        <div class="notification-status-header">
+            <h3>Notification Status</h3>
+            <button type="button" class="notification-status-action">View History</button>
+        </div>
+
+        <div class="notification-status-subtitle">SMS Notification (SIM800L)</div>
+
+        <div class="notification-status-row">
+            <div class="notification-status-main">
+                <div class="notification-status-icon success">✓</div>
+                <div class="notification-status-copy">
+                    <div class="notification-status-value">0</div>
+                    <div class="notification-status-label">Sent</div>
+                </div>
+            </div>
+            <div class="notification-status-date">Today</div>
+        </div>
+
+        <div class="notification-status-row">
+            <div class="notification-status-main">
+                <div class="notification-status-icon success">✓</div>
+                <div class="notification-status-copy">
+                    <div class="notification-status-value">0</div>
+                    <div class="notification-status-label">Delivered</div>
+                </div>
+            </div>
+            <div class="notification-status-date">Today</div>
+        </div>
+
+        <div class="notification-status-row">
+            <div class="notification-status-main">
+                <div class="notification-status-icon danger">✕</div>
+                <div class="notification-status-copy">
+                    <div class="notification-status-value">0</div>
+                    <div class="notification-status-label">Failed</div>
+                </div>
+            </div>
+            <div class="notification-status-date">Today</div>
+        </div>
+    `;
+}
+
+function renderRecentNotifications(history) {
+    const container = document.getElementById("recent-notifications");
+    const allAlerts = history
+        .flatMap((reading) => getAlertData(reading).map((alert) => ({ ...alert, recorded_at: reading.recorded_at })))
+        .sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at))
+        .slice(0, 5);
+
+    if (allAlerts.length === 0) {
+        container.innerHTML = `
+            <div class="status-box">
+                No notifications available yet.
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = allAlerts.map((item) => `
+        <div class="alert">
+            <strong>${item.title}</strong>
+            <br>
+            ${item.message}
+            <br>
+            <small>${formatDateTime(item.recorded_at)}</small>
+        </div>
+    `).join("");
+}
+
+function renderAlertHistory(history) {
+    const tableBody = document.getElementById("alert-history-body");
+
+    if (!history.length) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="table-empty">No alert history available.</td>
+            </tr>
+        `;
+        return;
+    }
+
+    tableBody.innerHTML = history.slice().reverse().map((reading) => {
+        const alerts = getAlertData(reading);
+        const highestSeverity = alerts.length ? alerts.reduce((max, alert) => {
+            const priority = { Critical: 2, Warning: 1 };
+            return priority[alert.severity] > priority[max] ? alert.severity : max;
+        }, "Warning") : "-";
+
+        return `
+            <tr>
+                <td>${new Date(reading.recorded_at).toLocaleDateString()}</td>
+                <td>${new Date(reading.recorded_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                <td>${alerts.length}</td>
+                <td>${highestSeverity}</td>
+                <td>${alerts.length ? "Active" : "Resolved"}</td>
+                <td>${alerts.length ? alerts.map((alert) => alert.title).join(", ") : "No issues detected"}</td>
+            </tr>
+        `;
+    }).join("");
+}
+
+async function loadAlertsData() {
+    try {
+        const [latestResponse, historyResponse] = await Promise.all([
+            fetch("/api/readings/latest"),
+            fetch("/api/readings/history")
+        ]);
+
+        if (latestResponse.ok && historyResponse.ok) {
+            const reading = await latestResponse.json();
+            const history = await historyResponse.json();
+
+            updateSummaryCards(history, reading);
+            renderRecentNotifications(history);
+            renderAlertHistory(history);
+
+            document.getElementById("critical-alerts-count").textContent = history.flatMap((item) => getAlertData(item)).filter((alert) => alert.severity === "Critical").length;
+            document.getElementById("warning-alerts-count").textContent = history.flatMap((item) => getAlertData(item)).filter((alert) => alert.severity === "Warning").length;
+            return;
+        }
+    } catch (error) {
+        console.warn("Falling back to localStorage for alerts data:", error);
+    }
+
+    const reading = JSON.parse(localStorage.getItem(readingKey) || "null");
+    const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+
+    updateSummaryCards(history, reading);
+    renderRecentNotifications(history);
+    renderAlertHistory(history);
+
+    document.getElementById("critical-alerts-count").textContent = history.flatMap((item) => getAlertData(item)).filter((alert) => alert.severity === "Critical").length;
+    document.getElementById("warning-alerts-count").textContent = history.flatMap((item) => getAlertData(item)).filter((alert) => alert.severity === "Warning").length;
+}
+
+updateDeviceTime();
+setInterval(updateDeviceTime, 1000);
+loadAlertsData();
+window.addEventListener("storage", loadAlertsData);
